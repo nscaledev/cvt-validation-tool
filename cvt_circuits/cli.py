@@ -100,17 +100,37 @@ def _matches_row(circuit: dict, status: str, protocol: str, a_report_not_contain
     return True
 
 
+def _su_sort_key(su: str) -> tuple:
+    if su.upper().startswith("SU") and su[2:].isdigit():
+        return (0, int(su[2:]))
+    return (1, su)
+
+
+def _print_report_table(counts: dict[str, int], csv_path: Path) -> None:
+    rows = sorted(counts.items(), key=lambda item: _su_sort_key(item[0]))
+    total = sum(counts.values())
+    su_w = max(len("SU"), max((len(su) for su, _ in rows), default=2))
+    col = "Fail+ethernet remaining"
+    n_w = max(len(col), len(str(total)))
+    print()
+    print(f"{'SU'.ljust(su_w)}  {col.rjust(n_w)}")
+    print(f"{'-' * su_w}  {'-' * n_w}")
+    for su, count in rows:
+        print(f"{su.ljust(su_w)}  {str(count).rjust(n_w)}")
+    print(f"{'-' * su_w}  {'-' * n_w}")
+    print(f"{'Total'.ljust(su_w)}  {str(total).rjust(n_w)}")
+    print()
+    print(f"CSV: {csv_path}")
+
+
 def cmd_circuits(args: argparse.Namespace) -> int:
     client = make_client(args)
     seen: set[str] = set()
     circuits: list[dict] = []
+    counts: dict[str, int] = {}
     scopes = client.su_scopes()
-    su_numbers = [_su_number(scope) for scope in scopes]
-    unique_su_numbers = list(dict.fromkeys(su_numbers))
     print(
-        f"Data Center; Status={args.status}; Protocol={args.protocol}; "
-        f"A Report does not contain {args.a_report_not_contains!r}; "
-        f"walking {len(scopes)} SU numbers",
+        f"Walking {len(scopes)} SU numbers (Fail+{args.protocol}, skip CORE)",
         file=sys.stderr,
     )
     for scope, chunk in client.iter_su_circuits(healthy=False):
@@ -125,21 +145,14 @@ def cmd_circuits(args: argparse.Namespace) -> int:
                 seen.add(circuit_id)
             circuits.append(circuit)
             added += 1
-        print(f"  {_su_number(scope)}: {added} Fail+{args.protocol}", file=sys.stderr)
+        su = _su_number(scope)
+        counts[su] = counts.get(su, 0) + added
+        print(f"  {su}", file=sys.stderr)
 
     out_dir = Path(args.out_dir)
     csv_path = out_dir / _timestamped_csv_name(args.csv_name)
     write_displayed_csv(csv_path, circuits)
-    summary = {
-        "filter": "Data Center",
-        "status": args.status,
-        "protocol": args.protocol,
-        "a_report_not_contains": args.a_report_not_contains,
-        "su_numbers": unique_su_numbers,
-        "circuit_count": len(circuits),
-        "csv": str(csv_path),
-    }
-    print(json.dumps(summary, indent=2))
+    _print_report_table(counts, csv_path)
     return 0
 
 

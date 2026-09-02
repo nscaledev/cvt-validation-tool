@@ -75,6 +75,10 @@ replaced:
 
 Example: `out/circuits-fail-ethernet-dc-20260902-124605.csv`
 
+When the run finishes it prints a table of remaining Fail+ethernet rows per SU
+(not the JSON dump). Progress lines only list each SU name so the counts are
+not repeated.
+
 Other examples
 --------------
 
