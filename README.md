@@ -47,7 +47,7 @@ data hall.
 Run
 ---
 
-Copy this command (exact default filters):
+With correct filter for ethernet switches:
 
 ```bash
 python3 -m cvt_circuits circuits \
@@ -59,27 +59,15 @@ python3 -m cvt_circuits circuits \
   --csv circuits-fail-ethernet-dc.csv
 ```
 
+Credentials come from `.env` (`CVT_USERNAME` / `CVT_PASSWORD`). Do not put the
+password on the command line.
+
 Each run writes a **new** file with a timestamp, so the previous CSV is not
 replaced:
 
 `out/circuits-fail-ethernet-dc-YYYYMMDD-HHMMSS.csv`
 
 Example: `out/circuits-fail-ethernet-dc-20260902-124605.csv`
-
-With correct filter for ethernet switches
------------------------------------------
-
-Without a `.env` file:
-
-```bash
-python3 -m cvt_circuits --username nscale --password 'your-cvt-ui-password' circuits \
-  --filter dc \
-  --status Fail \
-  --protocol ethernet \
-  --a-report-not-contains "No Report" \
-  --out-dir out \
-  --csv circuits-fail-ethernet-dc.csv
-```
 
 Other examples
 --------------
