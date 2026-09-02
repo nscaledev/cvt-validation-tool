@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from cvt_circuits.client import CvtApiError, CvtClient
@@ -37,8 +38,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exclude rows whose A Report contains this text (Circuits View Does Not Contain).",
     )
     circuits.add_argument("--out-dir", default="out")
-    circuits.add_argument("--csv", dest="csv_name", default="circuits-fail-ethernet-dc.csv")
+    circuits.add_argument(
+        "--csv",
+        dest="csv_name",
+        default="circuits-fail-ethernet-dc.csv",
+        help="CSV name prefix; a timestamp is inserted before the extension so each run is a new file.",
+    )
     return parser
+
+
+def _timestamped_csv_name(name: str) -> str:
+    path = Path(name)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    suffix = path.suffix or ".csv"
+    return f"{path.stem}-{stamp}{suffix}"
 
 
 def require_creds(args: argparse.Namespace) -> None:
@@ -107,7 +120,7 @@ def cmd_circuits(args: argparse.Namespace) -> int:
         print(f"  {hall}: {len(chunk)} issues, {added} Fail+{args.protocol} (total {len(circuits)})", file=sys.stderr)
 
     out_dir = Path(args.out_dir)
-    csv_path = out_dir / args.csv_name
+    csv_path = out_dir / _timestamped_csv_name(args.csv_name)
     write_displayed_csv(csv_path, circuits)
     summary = {
         "filter": "Data Center",

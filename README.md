@@ -59,7 +59,12 @@ python3 -m cvt_circuits circuits \
   --csv circuits-fail-ethernet-dc.csv
 ```
 
-CSV path: `out/circuits-fail-ethernet-dc.csv`
+Each run writes a **new** file with a timestamp, so the previous CSV is not
+replaced:
+
+`out/circuits-fail-ethernet-dc-YYYYMMDD-HHMMSS.csv`
+
+Example: `out/circuits-fail-ethernet-dc-20260902-124605.csv`
 
 Without a `.env` file:
 
