@@ -78,8 +78,8 @@ def make_client(args: argparse.Namespace) -> CvtClient:
 def cmd_stats(args: argparse.Namespace) -> int:
     client = make_client(args)
     print(json.dumps(client.circuits_stats(context="dc"), indent=2))
-    units = client.scalable_units()
-    print(f"scalable_units ({len(units)}): {', '.join(units)}", file=sys.stderr)
+    units = client.su_scopes()
+    print(f"su_scopes ({len(units)}): {', '.join(units)}", file=sys.stderr)
     return 0
 
 
@@ -99,7 +99,7 @@ def cmd_circuits(args: argparse.Namespace) -> int:
     client = make_client(args)
     seen: set[str] = set()
     circuits: list[dict] = []
-    units = client.scalable_units()
+    units = client.su_scopes()
     print(
         f"Data Center; Status={args.status}; Protocol={args.protocol}; "
         f"A Report does not contain {args.a_report_not_contains!r}; walking {len(units)} SU numbers",

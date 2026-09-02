@@ -81,11 +81,35 @@ class CvtClient:
             {"context": context, "items": items},
         )
 
-    def scalable_units(self) -> list[str]:
-        units = self.get_json("/cablevalidation/resources/scalable_units")
+    def data_halls(self) -> list[str]:
+        halls = self.get_json("/cablevalidation/resources/data_halls")
+        if not isinstance(halls, list):
+            raise CvtApiError(f"unexpected data_halls payload: {type(halls)}")
+        return [str(item) for item in halls]
+
+    def scalable_units(self, *, data_hall: str | None = None, context: str | None = None) -> list[str]:
+        params: dict[str, Any] = {}
+        if data_hall:
+            params["data_hall"] = data_hall
+        if context:
+            params["context"] = context
+        units = self.get_json("/cablevalidation/resources/scalable_units", params or None)
         if not isinstance(units, list):
             raise CvtApiError(f"unexpected scalable_units payload: {type(units)}")
         return [str(item) for item in units]
+
+    def su_scopes(self) -> list[str]:
+        """Return unique hall/SU scopes, e.g. ``EH1A/SU1``."""
+        scopes: list[str] = []
+        seen: set[str] = set()
+        for hall in self.data_halls():
+            for su in self.scalable_units(data_hall=hall):
+                scope = su if "/" in su else f"{hall}/{su}"
+                if scope in seen:
+                    continue
+                seen.add(scope)
+                scopes.append(scope)
+        return scopes
 
     def racks(self) -> list[str]:
         racks = self.get_json("/cablevalidation/resources/racks")
@@ -126,16 +150,16 @@ class CvtClient:
         report: str | None = None,
         page: str = "circuit",
     ) -> Iterable[tuple[str, list[dict[str, Any]]]]:
-        """Yield circuits for each scalable unit.
+        """Yield circuits for each hall/SU scope.
 
-        A single ``context=dc`` dump times out on 16K (~350k circuits). Walking
-        SU numbers reconstructs the same Data Center filter without pulling the
-        whole fabric in one request.
+        A single ``context=dc`` dump times out on 16K (~350k circuits). SU list
+        requires ``data_hall``, so halls are used only to discover SU numbers.
+        Each circuits request is ``context=su&items=<hall>/<su>``.
         """
-        for su in self.scalable_units():
-            yield su, self.circuits(
+        for scope in self.su_scopes():
+            yield scope, self.circuits(
                 context="su",
-                items=su,
+                items=scope,
                 page=page,
                 healthy=healthy,
                 report=report,

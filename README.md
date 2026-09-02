@@ -102,9 +102,10 @@ Notes
 -----
 
 On the WC TX 16K collector a single `context=dc` circuits request times
-out (~353k circuits). This script walks each SU number
-(`GET /cablevalidation/resources/scalable_units`, then
-`context=su&items=<su>`) and de-duplicates `circuit_id`.
+out (~353k circuits). This script discovers SU numbers per data hall
+(`GET /cablevalidation/resources/scalable_units?data_hall=<hall>`), then
+walks each SU (`context=su&items=<hall>/<su>`) and de-duplicates
+`circuit_id`.
 
 Docs: [Rest APIs 2.0.1](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/rest-apis),
 [Reports APIs](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/reports-apis),
