@@ -75,11 +75,16 @@ def make_client(args: argparse.Namespace) -> CvtClient:
     return client
 
 
+def _su_number(scope: str) -> str:
+    return scope.rsplit("/", 1)[-1]
+
+
 def cmd_stats(args: argparse.Namespace) -> int:
     client = make_client(args)
     print(json.dumps(client.circuits_stats(context="dc"), indent=2))
-    units = client.su_scopes()
-    print(f"su_scopes ({len(units)}): {', '.join(units)}", file=sys.stderr)
+    units = [_su_number(scope) for scope in client.su_scopes()]
+    unique = list(dict.fromkeys(units))
+    print(f"su_numbers ({len(unique)}): {', '.join(unique)}", file=sys.stderr)
     return 0
 
 
@@ -99,13 +104,16 @@ def cmd_circuits(args: argparse.Namespace) -> int:
     client = make_client(args)
     seen: set[str] = set()
     circuits: list[dict] = []
-    units = client.su_scopes()
+    scopes = client.su_scopes()
+    su_numbers = [_su_number(scope) for scope in scopes]
+    unique_su_numbers = list(dict.fromkeys(su_numbers))
     print(
         f"Data Center; Status={args.status}; Protocol={args.protocol}; "
-        f"A Report does not contain {args.a_report_not_contains!r}; walking {len(units)} SU numbers",
+        f"A Report does not contain {args.a_report_not_contains!r}; "
+        f"walking {len(scopes)} SU numbers",
         file=sys.stderr,
     )
-    for su, chunk in client.iter_su_circuits(healthy=False):
+    for scope, chunk in client.iter_su_circuits(healthy=False):
         added = 0
         for circuit in chunk:
             if not _matches_row(circuit, args.status, args.protocol, args.a_report_not_contains):
@@ -117,7 +125,10 @@ def cmd_circuits(args: argparse.Namespace) -> int:
                 seen.add(circuit_id)
             circuits.append(circuit)
             added += 1
-        print(f"  {su}: {len(chunk)} issues, {added} Fail+{args.protocol} (total {len(circuits)})", file=sys.stderr)
+        print(
+            f"  {_su_number(scope)}: {len(chunk)} issues, {added} Fail+{args.protocol} (total {len(circuits)})",
+            file=sys.stderr,
+        )
 
     out_dir = Path(args.out_dir)
     csv_path = out_dir / _timestamped_csv_name(args.csv_name)
@@ -127,7 +138,7 @@ def cmd_circuits(args: argparse.Namespace) -> int:
         "status": args.status,
         "protocol": args.protocol,
         "a_report_not_contains": args.a_report_not_contains,
-        "su_numbers": units,
+        "su_numbers": unique_su_numbers,
         "circuit_count": len(circuits),
         "csv": str(csv_path),
     }

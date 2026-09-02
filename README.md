@@ -45,9 +45,10 @@ Default export filters
 | Protocol | ethernet | `--protocol ethernet` |
 | A Report | Does **not** contain `No Report` | `--a-report-not-contains "No Report"` |
 | Issues only | unhealthy circuits | built-in (`healthy=false`) |
+| SU number | skip `CORE` | built-in |
 
 There is no extra hall / SU / location flag. Data Center coverage is built by
-walking every SU number.
+walking every SU number except `CORE` (compute halls).
 
 Run
 ---

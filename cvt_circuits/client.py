@@ -99,13 +99,14 @@ class CvtClient:
         return [str(item) for item in units]
 
     def su_scopes(self) -> list[str]:
-        """Return unique hall/SU scopes, e.g. ``EH1A/SU1``."""
+        """Return unique hall/SU scopes, e.g. ``EH1A/SU1``. Skip CORE SUs."""
         scopes: list[str] = []
         seen: set[str] = set()
         for hall in self.data_halls():
             for su in self.scalable_units(data_hall=hall):
                 scope = su if "/" in su else f"{hall}/{su}"
-                if scope in seen:
+                su_name = scope.rsplit("/", 1)[-1]
+                if su_name.upper() == "CORE" or scope in seen:
                     continue
                 seen.add(scope)
                 scopes.append(scope)
