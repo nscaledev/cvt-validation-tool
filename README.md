@@ -44,8 +44,10 @@ Default export filters
 There is no extra hall / SU / location flag. Data Center already walks every
 data hall.
 
-Run (exact filters written out)
--------------------------------
+Run
+---
+
+Copy this command (exact default filters):
 
 ```bash
 python3 -m cvt_circuits circuits \
@@ -55,12 +57,6 @@ python3 -m cvt_circuits circuits \
   --a-report-not-contains "No Report" \
   --out-dir out \
   --csv circuits-fail-ethernet-dc.csv
-```
-
-That is the same as:
-
-```bash
-python3 -m cvt_circuits circuits
 ```
 
 CSV path: `out/circuits-fail-ethernet-dc.csv`
