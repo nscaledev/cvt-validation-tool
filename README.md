@@ -1,33 +1,17 @@
 cvt-validation-tool
 ===================
 
-Exports NVIDIA Cable Validation Tool **Circuits View** rows (Data Center
-filter) to CSV.
+Exports NVIDIA Cable Validation Tool **Circuits View** rows to CSV.
 
 Setup
 -----
 
-1. Clone the repo and go into that folder:
-
-```bash
-git clone git@github.com:nscaledev/cvt-validation-tool.git
-cd cvt-validation-tool
-```
-
-2. Keep the Teleport tunnel up so `https://localhost:9443` reaches CVT:
-
-```bash
-tsh ssh -L 9443:192.168.10.3:9443 firstname.lastname.ct@mobilekit-p-phy-device100
-```
-
-3. Create a local `.env` **in this same folder** (next to `README.md`).
-   Copy the example file, then put your CVT UI password in it:
+1. In this folder (next to `README.md`), copy the example env file and set
+   your CVT UI password:
 
 ```bash
 cp .env.example .env
 ```
-
-Edit `.env`:
 
 ```
 CVT_URL=https://localhost:9443
@@ -36,33 +20,82 @@ CVT_PASSWORD=your-cvt-ui-password
 CVT_INSECURE=true
 ```
 
-`.env` is gitignored. Do not commit it.
+`.env` is gitignored. `git pull` will not overwrite it. Do not commit it.
 
-Run
----
+2. Keep the Teleport tunnel up so `https://localhost:9443` reaches CVT:
 
-From the repo folder (`cvt-validation-tool`):
+```bash
+tsh ssh -L 9443:192.168.10.3:9443 firstname.lastname.ct@mobilekit-p-phy-device100
+```
+
+Default export filters
+----------------------
+
+`python3 -m cvt_circuits circuits` applies all of these (same as Circuits View):
+
+| Filter | Value | Flag |
+|---|---|---|
+| Resource | Data Center | `--filter dc` |
+| Status | Fail | `--status Fail` |
+| Protocol | ethernet | `--protocol ethernet` |
+| A Report | Does **not** contain `No Report` | `--a-report-not-contains "No Report"` |
+| Issues only | unhealthy circuits | built-in (`healthy=false`) |
+
+There is no extra hall / SU / location flag. Data Center already walks every
+data hall.
+
+Run (exact filters written out)
+-------------------------------
+
+```bash
+python3 -m cvt_circuits circuits \
+  --filter dc \
+  --status Fail \
+  --protocol ethernet \
+  --a-report-not-contains "No Report" \
+  --out-dir out \
+  --csv circuits-fail-ethernet-dc.csv
+```
+
+That is the same as:
 
 ```bash
 python3 -m cvt_circuits circuits
 ```
 
-That pulls Fail + ethernet rows and writes:
+CSV path: `out/circuits-fail-ethernet-dc.csv`
 
-`out/circuits-fail-ethernet-dc.csv`
-
-If you do not want a `.env` file, pass credentials on the command line.
-Flags go **before** `circuits`:
+Without a `.env` file:
 
 ```bash
-python3 -m cvt_circuits --username nscale --password 'your-cvt-ui-password' circuits
+python3 -m cvt_circuits --username nscale --password 'your-cvt-ui-password' circuits \
+  --filter dc \
+  --status Fail \
+  --protocol ethernet \
+  --a-report-not-contains "No Report"
 ```
 
-Other commands
+Other examples
 --------------
+
+Include A Report `No Report` rows:
+
+```bash
+python3 -m cvt_circuits circuits \
+  --filter dc \
+  --status Fail \
+  --protocol ethernet \
+  --a-report-not-contains "" \
+  --csv circuits-fail-ethernet-including-no-report.csv
+```
+
+DC counts only (no CSV; Data Center filter only):
 
 ```bash
 python3 -m cvt_circuits stats
+```
+
+```bash
 python3 -m cvt_circuits circuits --help
 ```
 
