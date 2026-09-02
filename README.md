@@ -1,71 +1,78 @@
 cvt-validation-tool
 ===================
 
-NVIDIA CVT Circuits View export.
+Exports NVIDIA Cable Validation Tool **Circuits View** rows (Data Center
+filter) to CSV.
 
-Pulls Circuits View data from the Cable Validation Tool REST API with the
-**Data Center** resource filter applied.
+Setup
+-----
 
-The UI at `https://localhost:9443/cables_validation/#/default-circuits-view/_`
-is a browser app. This repo talks to the collector API under `/cablevalidation`.
+1. Clone the repo and go into that folder:
 
-Why it walks data halls
------------------------
+```bash
+git clone git@github.com:nscaledev/cvt-validation-tool.git
+cd cvt-validation-tool
+```
 
-On the WC TX 16K collector there are ~353k circuits. A single
-
-`GET /cablevalidation/report/circuits?context=dc`
-
-times out. The script applies the same DC scope by requesting each data hall
-(`context=dh&items=<hall>`) and de-duplicating `circuit_id`.
-
-Docs: [Rest APIs 2.0.1](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/rest-apis),
-[Reports APIs](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/reports-apis),
-[Resource Filter](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/resource-filter).
-
-Prerequisites
--------------
-
-Keep the Teleport tunnel up:
+2. Keep the Teleport tunnel up so `https://localhost:9443` reaches CVT:
 
 ```bash
 tsh ssh -L 9443:192.168.10.3:9443 firstname.lastname.ct@mobilekit-p-phy-device100
 ```
 
-Copy env and set the CVT UI password (do not commit `.env`):
+3. Create a local `.env` **in this same folder** (next to `README.md`).
+   Copy the example file, then put your CVT UI password in it:
 
 ```bash
 cp .env.example .env
 ```
 
-Usage
------
+Edit `.env`:
 
-Python 3.9+, no extra packages.
-
-```bash
-# DC circuit counts (safe)
-python3 -m cvt_circuits stats
-
-# Circuits View default: Data Center filter, Fail rows only
-python3 -m cvt_circuits circuits --filter dc --status fail
-
-# Every circuit in the data center (large; skip the JSON array)
-python3 -m cvt_circuits circuits --filter dc --status all --skip-json --timeout 180
+```
+CVT_URL=https://localhost:9443
+CVT_USERNAME=nscale
+CVT_PASSWORD=your-cvt-ui-password
+CVT_INSECURE=true
 ```
 
-Outputs land in `out/`:
+`.env` is gitignored. Do not commit it.
 
-- `circuits.jsonl` — one JSON object per circuit
-- `circuits.csv` — flattened A/Z columns for tracker paste
-- `circuits.json` — JSON array (omit with `--skip-json` on full dumps)
+Run
+---
 
-Auth
-----
+From the repo folder (`cvt-validation-tool`):
 
-Session cookie login, same as the UI:
+```bash
+python3 -m cvt_circuits circuits
+```
 
-`POST /cablevalidation/login` with `httpd_username` / `httpd_password`.
+That pulls Fail + ethernet rows and writes:
 
-Credentials come from `CVT_USERNAME` / `CVT_PASSWORD` or `--username` / `--password`.
-The collector uses a self-signed cert; `--insecure` is on by default.
+`out/circuits-fail-ethernet-dc.csv`
+
+If you do not want a `.env` file, pass credentials on the command line.
+Flags go **before** `circuits`:
+
+```bash
+python3 -m cvt_circuits --username nscale --password 'your-cvt-ui-password' circuits
+```
+
+Other commands
+--------------
+
+```bash
+python3 -m cvt_circuits stats
+python3 -m cvt_circuits circuits --help
+```
+
+Notes
+-----
+
+On the WC TX 16K collector a single `context=dc` circuits request times
+out (~353k circuits). This script walks each data hall
+(`context=dh&items=<hall>`) and de-duplicates `circuit_id`.
+
+Docs: [Rest APIs 2.0.1](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/rest-apis),
+[Reports APIs](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/reports-apis),
+[Resource Filter](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/resource-filter).

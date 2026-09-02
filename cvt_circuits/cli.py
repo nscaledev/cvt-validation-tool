@@ -43,7 +43,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def require_creds(args: argparse.Namespace) -> None:
     if not args.username or not args.password:
-        raise SystemExit("Set CVT_USERNAME and CVT_PASSWORD in .env, or pass --username and --password.")
+        raise SystemExit(
+            "Missing CVT credentials. In this folder run: cp .env.example .env\n"
+            "Then set CVT_PASSWORD, or pass --username and --password before the command."
+        )
 
 
 def make_client(args: argparse.Namespace) -> CvtClient:
