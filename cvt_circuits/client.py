@@ -81,11 +81,11 @@ class CvtClient:
             {"context": context, "items": items},
         )
 
-    def data_halls(self) -> list[str]:
-        halls = self.get_json("/cablevalidation/resources/data_halls")
-        if not isinstance(halls, list):
-            raise CvtApiError(f"unexpected data_halls payload: {type(halls)}")
-        return [str(item) for item in halls]
+    def scalable_units(self) -> list[str]:
+        units = self.get_json("/cablevalidation/resources/scalable_units")
+        if not isinstance(units, list):
+            raise CvtApiError(f"unexpected scalable_units payload: {type(units)}")
+        return [str(item) for item in units]
 
     def racks(self) -> list[str]:
         racks = self.get_json("/cablevalidation/resources/racks")
@@ -119,23 +119,23 @@ class CvtClient:
             raise CvtApiError(f"unexpected circuits payload: {type(payload)}")
         return payload
 
-    def iter_dc_circuits(
+    def iter_su_circuits(
         self,
         *,
         healthy: bool | None = False,
         report: str | None = None,
         page: str = "circuit",
     ) -> Iterable[tuple[str, list[dict[str, Any]]]]:
-        """Yield circuits for each data hall.
+        """Yield circuits for each scalable unit.
 
         A single ``context=dc`` dump times out on 16K (~350k circuits). Walking
-        halls reconstructs the same Data Center filter without pulling the
+        SU numbers reconstructs the same Data Center filter without pulling the
         whole fabric in one request.
         """
-        for hall in self.data_halls():
-            yield hall, self.circuits(
-                context="dh",
-                items=hall,
+        for su in self.scalable_units():
+            yield su, self.circuits(
+                context="su",
+                items=su,
                 page=page,
                 healthy=healthy,
                 report=report,

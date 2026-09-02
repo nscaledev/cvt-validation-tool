@@ -46,8 +46,8 @@ Default export filters
 | A Report | Does **not** contain `No Report` | `--a-report-not-contains "No Report"` |
 | Issues only | unhealthy circuits | built-in (`healthy=false`) |
 
-There is no extra hall / SU / location flag. Data Center already walks every
-data hall.
+There is no extra hall / SU / location flag. Data Center coverage is built by
+walking every SU number.
 
 Run
 ---
@@ -102,8 +102,9 @@ Notes
 -----
 
 On the WC TX 16K collector a single `context=dc` circuits request times
-out (~353k circuits). This script walks each data hall
-(`context=dh&items=<hall>`) and de-duplicates `circuit_id`.
+out (~353k circuits). This script walks each SU number
+(`GET /cablevalidation/resources/scalable_units`, then
+`context=su&items=<su>`) and de-duplicates `circuit_id`.
 
 Docs: [Rest APIs 2.0.1](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/rest-apis),
 [Reports APIs](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/reports-apis),

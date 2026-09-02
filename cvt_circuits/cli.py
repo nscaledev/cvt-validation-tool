@@ -78,8 +78,8 @@ def make_client(args: argparse.Namespace) -> CvtClient:
 def cmd_stats(args: argparse.Namespace) -> int:
     client = make_client(args)
     print(json.dumps(client.circuits_stats(context="dc"), indent=2))
-    halls = client.data_halls()
-    print(f"data_halls ({len(halls)}): {', '.join(halls)}", file=sys.stderr)
+    units = client.scalable_units()
+    print(f"scalable_units ({len(units)}): {', '.join(units)}", file=sys.stderr)
     return 0
 
 
@@ -99,13 +99,13 @@ def cmd_circuits(args: argparse.Namespace) -> int:
     client = make_client(args)
     seen: set[str] = set()
     circuits: list[dict] = []
-    halls = client.data_halls()
+    units = client.scalable_units()
     print(
         f"Data Center; Status={args.status}; Protocol={args.protocol}; "
-        f"A Report does not contain {args.a_report_not_contains!r}; walking {len(halls)} data halls",
+        f"A Report does not contain {args.a_report_not_contains!r}; walking {len(units)} SU numbers",
         file=sys.stderr,
     )
-    for hall, chunk in client.iter_dc_circuits(healthy=False):
+    for su, chunk in client.iter_su_circuits(healthy=False):
         added = 0
         for circuit in chunk:
             if not _matches_row(circuit, args.status, args.protocol, args.a_report_not_contains):
@@ -117,7 +117,7 @@ def cmd_circuits(args: argparse.Namespace) -> int:
                 seen.add(circuit_id)
             circuits.append(circuit)
             added += 1
-        print(f"  {hall}: {len(chunk)} issues, {added} Fail+{args.protocol} (total {len(circuits)})", file=sys.stderr)
+        print(f"  {su}: {len(chunk)} issues, {added} Fail+{args.protocol} (total {len(circuits)})", file=sys.stderr)
 
     out_dir = Path(args.out_dir)
     csv_path = out_dir / _timestamped_csv_name(args.csv_name)
@@ -127,7 +127,7 @@ def cmd_circuits(args: argparse.Namespace) -> int:
         "status": args.status,
         "protocol": args.protocol,
         "a_report_not_contains": args.a_report_not_contains,
-        "data_halls": halls,
+        "su_numbers": units,
         "circuit_count": len(circuits),
         "csv": str(csv_path),
     }
