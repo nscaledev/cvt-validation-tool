@@ -11,7 +11,10 @@ Setup
 
 ```bash
 cp .env.example .env
+vim .env
 ```
+
+Paste your CVT UI password on the `CVT_PASSWORD=` line:
 
 ```
 CVT_URL=https://localhost:9443
@@ -19,6 +22,8 @@ CVT_USERNAME=nscale
 CVT_PASSWORD=your-cvt-ui-password
 CVT_INSECURE=true
 ```
+
+Save and quit vim with `:wq!` (type that, then press Enter).
 
 `.env` is gitignored. `git pull` will not overwrite it. Do not commit it.
 
