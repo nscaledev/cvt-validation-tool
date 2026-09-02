@@ -66,6 +66,9 @@ replaced:
 
 Example: `out/circuits-fail-ethernet-dc-20260902-124605.csv`
 
+With correct filter for ethernet switches
+-----------------------------------------
+
 Without a `.env` file:
 
 ```bash
@@ -73,7 +76,9 @@ python3 -m cvt_circuits --username nscale --password 'your-cvt-ui-password' circ
   --filter dc \
   --status Fail \
   --protocol ethernet \
-  --a-report-not-contains "No Report"
+  --a-report-not-contains "No Report" \
+  --out-dir out \
+  --csv circuits-fail-ethernet-dc.csv
 ```
 
 Other examples
