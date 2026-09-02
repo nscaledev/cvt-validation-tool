@@ -125,10 +125,7 @@ def cmd_circuits(args: argparse.Namespace) -> int:
                 seen.add(circuit_id)
             circuits.append(circuit)
             added += 1
-        print(
-            f"  {_su_number(scope)}: {len(chunk)} issues, {added} Fail+{args.protocol} (total {len(circuits)})",
-            file=sys.stderr,
-        )
+        print(f"  {_su_number(scope)}: {added} Fail+{args.protocol}", file=sys.stderr)
 
     out_dir = Path(args.out_dir)
     csv_path = out_dir / _timestamped_csv_name(args.csv_name)
