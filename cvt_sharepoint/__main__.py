@@ -7,9 +7,9 @@ if str(_ROOT) not in sys.path:
 
 from venv_bootstrap import ensure_venv
 
-ensure_venv("cvt_circuits")
+ensure_venv("cvt_sharepoint")
 
-from cvt_circuits.cli import main
+from cvt_sharepoint.cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

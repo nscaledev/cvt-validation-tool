@@ -1,1 +1,5 @@
+# Installed automatically into ./.venv on first run (see venv_bootstrap.py).
+# Do not brew-install these; pip in the venv is the supported path.
 openpyxl>=3.1.0
+msal>=1.31.0
+requests>=2.32.0

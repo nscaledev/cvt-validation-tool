@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# Team launcher: ensures python3 + .venv deps, then runs a project module
+# inside ./.venv (same venv every successful run).
+# Python libraries come from requirements.txt via pip — not Homebrew.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./cvt sharepoint prepare
+  ./cvt sharepoint prepare --csv out/circuits-fail-ethernet-dc-20260902-140237.csv --tracker "out/Nscale_WC_Cabling_HW_Remediation_Tracker_16k - New.xlsx"
+  ./cvt sharepoint open
+  ./cvt circuits circuits [cvt_circuits options]
+  ./cvt circuits stats
+
+prepare builds HTML+Excel handoff (20 reopen / 300 adds) for SharePoint paste.
+
+First run: creates ./.venv and pip-installs requirements.txt automatically.
+Later runs: reuse the same .venv (no manual pip). Packages are not installed with Homebrew.
+EOF
+}
+
+ensure_python3() {
+  if command -v python3 >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "python3 not found." >&2
+  if command -v brew >/dev/null 2>&1; then
+    echo "Installing Python with Homebrew (one-time)..." >&2
+    brew install python
+    hash -r
+    if command -v python3 >/dev/null 2>&1; then
+      return 0
+    fi
+  fi
+  echo "Install Python 3.9+ then re-run:" >&2
+  echo "  brew install python" >&2
+  echo "  or: xcode-select --install" >&2
+  exit 1
+}
+
+ensure_venv() {
+  # Create/update .venv and install requirements.txt when needed.
+  # Always prefer that interpreter for the real module run.
+  python3 - <<'PY'
+import sys
+from pathlib import Path
+
+root = Path(".").resolve()
+sys.path.insert(0, str(root))
+from venv_bootstrap import prepare_venv, venv_python
+
+prepare_venv(root)
+py = venv_python(root)
+if not py.is_file():
+    raise SystemExit(f"venv python missing: {py}")
+print(py)
+PY
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" || "${1:-}" == "" ]]; then
+  usage
+  exit 0
+fi
+
+ensure_python3
+
+VENV_PY="$(ensure_venv)"
+export CVT_IN_VENV=1
+export PYTHONPATH="${ROOT}${PYTHONPATH:+:$PYTHONPATH}"
+
+tool="$1"
+shift
+case "$tool" in
+  sharepoint)
+    exec "$VENV_PY" -m cvt_sharepoint "$@"
+    ;;
+  circuits)
+    exec "$VENV_PY" -m cvt_circuits "$@"
+    ;;
+  *)
+    echo "Unknown tool: $tool" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

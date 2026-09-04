@@ -16,3 +16,28 @@ def load_dotenv(path: Path | None = None) -> None:
         key = key.strip()
         value = value.strip().strip("'").strip('"')
         os.environ.setdefault(key, value)
+
+
+def upsert_dotenv(path: Path, key: str, value: str) -> None:
+    """Create or replace KEY=value in a .env file. Values with spaces are quoted."""
+    rendered = value
+    if any(ch in value for ch in (' ', '#', '"', "'")):
+        rendered = '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    line = f"{key}={rendered}"
+    rows: list[str] = []
+    replaced = False
+    if path.is_file():
+        for raw in path.read_text().splitlines():
+            stripped = raw.strip()
+            if stripped.startswith(f"{key}=") or stripped.startswith(f"{key} ="):
+                rows.append(line)
+                replaced = True
+            else:
+                rows.append(raw)
+    if not replaced:
+        if rows and rows[-1] != "":
+            rows.append(line)
+        else:
+            rows.append(line)
+    path.write_text("\n".join(rows).rstrip() + "\n")
+    os.environ[key] = value

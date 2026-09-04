@@ -6,6 +6,14 @@ Exports NVIDIA Cable Validation Tool **Circuits View** rows to CSV.
 Setup
 -----
 
+Dependencies install themselves. The first run creates a virtualenv named
+``.venv`` in this folder and ``pip install``s ``requirements.txt`` (msal,
+openpyxl, …). Later runs reuse ``.venv`` and skip pip unless
+``requirements.txt`` changed. Do not brew-install those Python libraries.
+
+Team members only need Python 3.9+ on the PATH. If ``python3`` is missing
+and Homebrew is installed, ``./cvt`` will run ``brew install python``.
+
 1. In this folder (next to `README.md`), copy the example env file and set
    your CVT UI password:
 
@@ -30,13 +38,13 @@ Save and quit vim with `:wq!` (type that, then press Enter).
 2. Keep the Teleport tunnel up so `https://localhost:9443` reaches CVT:
 
 ```bash
-tsh ssh -L 9443:192.168.10.3:9443 firstname.lastname.ct@mobilekit-p-phy-device100
+tsh ssh -L 9443:192.168.10.3:9443 first_name.last_name@mobilekit-p-phy-device100
 ```
 
 Default export filters
 ----------------------
 
-`python3 -m cvt_circuits circuits` applies all of these (same as Circuits View):
+`./cvt circuits circuits` applies all of these (same as Circuits View):
 
 | Filter | Value | Flag |
 |---|---|---|
@@ -56,7 +64,7 @@ Run
 With correct filter for ethernet switches:
 
 ```bash
-python3 -m cvt_circuits circuits \
+./cvt circuits circuits \
   --filter dc \
   --status Fail \
   --protocol ethernet \
@@ -64,6 +72,8 @@ python3 -m cvt_circuits circuits \
   --out-dir out \
   --csv circuits-fail-ethernet-dc.csv
 ```
+
+`python3 -m cvt_circuits ...` also works; it uses the same ``.venv``.
 
 Credentials come from `.env` (`CVT_USERNAME` / `CVT_PASSWORD`). Do not put the
 password on the command line.
@@ -85,7 +95,7 @@ Other examples
 Include A Report `No Report` rows:
 
 ```bash
-python3 -m cvt_circuits circuits \
+./cvt circuits circuits \
   --filter dc \
   --status Fail \
   --protocol ethernet \
@@ -96,11 +106,11 @@ python3 -m cvt_circuits circuits \
 DC counts only (no CSV; Data Center filter only):
 
 ```bash
-python3 -m cvt_circuits stats
+./cvt circuits stats
 ```
 
 ```bash
-python3 -m cvt_circuits circuits --help
+./cvt circuits circuits --help
 ```
 
 Notes
@@ -115,3 +125,35 @@ walks each SU (`context=su&items=<hall>/<su>`) and de-duplicates
 Docs: [Rest APIs 2.0.1](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/rest-apis),
 [Reports APIs](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/reports-apis),
 [Resource Filter](https://networking-docs.nvidia.com/cablevalidationtool/2.0.1/resource-filter).
+
+SharePoint tracker prepare (local working copy + HTML handoff)
+--------------------------------------------------------------
+
+Each audit run builds a **capped handoff** for manual SharePoint paste
+(no full-tab replace, formulas untouched):
+
+- up to **20** ``REOPEN EXISTING`` rows (copy each TSV → paste on ``U&lt;row&gt;``)
+- up to **300** add rows (one TSV block → paste at bottom starting at column A)
+
+```bash
+./cvt circuits circuits --out-dir out --csv circuits-fail-ethernet-dc.csv
+./cvt sharepoint prepare
+```
+
+Outputs in ``out/``:
+
+- ``handoff-*.html`` (preferred — copy buttons)
+- ``handoff-*.xlsx``
+
+Tracker download in ``out/`` is read-only (not modified, no backup copies).
+
+Re-run prepare on later audits to drain remaining reopens/adds 20 + 300 at a time.
+
+Optional:
+
+```bash
+./cvt sharepoint prepare --tracker "out/Nscale_WC_Cabling_HW_Remediation_Tracker_16k - New.xlsx" --csv out/circuits-fail-ethernet-dc-20260902-140237.csv --no-browser
+```
+
+Or omit ``--csv`` to auto-use the newest ``circuits*.csv`` in ``out/``.
+
